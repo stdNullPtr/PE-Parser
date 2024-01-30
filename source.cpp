@@ -1,11 +1,13 @@
 #include <conio.h>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <Windows.h>
 #include <winnt.h>
+#include <sstream>
 
-using std::hex, std::dec, std::uppercase, std::cout, std::cerr;
+using std::dec, std::uppercase, std::cout, std::cerr;
 using std::string;
 
 std::vector<char> readFile(const string& filename);
@@ -37,35 +39,51 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	auto hexStr = [](auto value)
+		{
+			std::stringstream ss;
+			ss << std::hex << "0x" << std::uppercase << value;
+			return ss.str();
+		};
+
 	const char* pFileContents{ fileContents.data() };
 
 	const IMAGE_DOS_HEADER* pDosHeader{ (IMAGE_DOS_HEADER*)pFileContents };
 	if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
 	{
-		cerr << "DOS header begins with an invalid WORD: " << hex << "0x" << uppercase << pDosHeader->e_magic << " should be: 0x" << IMAGE_DOS_SIGNATURE << '\n';
+		cerr << "DOS header begins with an invalid WORD: " << hexStr(pDosHeader->e_magic) << " should be: " << hexStr(IMAGE_DOS_SIGNATURE) << '\n';
 		return EXIT_FAILURE;
 	}
 
 	const IMAGE_NT_HEADERS* pPeHeaders{ (IMAGE_NT_HEADERS*)(pFileContents + pDosHeader->e_lfanew) };
-
 	if (pPeHeaders->Signature != IMAGE_NT_SIGNATURE)
 	{
-		cerr << "PE header begins with an invalid LONG sig: " << hex << "0x" << uppercase << pPeHeaders->Signature << " should be: 0x" << IMAGE_NT_SIGNATURE << '\n';
+		cerr << "PE header begins with an invalid LONG sig: " << hexStr(pPeHeaders->Signature) << " should be: " << hexStr(IMAGE_NT_SIGNATURE) << '\n';
 		return EXIT_FAILURE;
 	}
 
-	cout << "dosHeader.e_magic: " << hex << "0x" << uppercase << pDosHeader->e_magic << '\n';
-	cout << "Offset to PE header: " << hex << "0x" << uppercase << pDosHeader->e_lfanew << '\n';
-	cout << "PE header start: " << hex << "0x" << uppercase << pFileContents + pDosHeader->e_lfanew << '\n';
-	cout << "File header | machine: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.Machine << '\n';
-	cout << "File header | number of sections: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSections << '\n';
-	cout << "File header | pointer to symbol table: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.PointerToSymbolTable << '\n';
-	cout << "File header | number of symbols: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSymbols << '\n';
-	cout << "File header | size of optional header: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.SizeOfOptionalHeader << '\n';
+	char eMagicString[3]{ 0 };
+	std::memcpy(eMagicString, &pDosHeader->e_magic, 2);
+
+	cout << "DOS Header\n";
+	cout << "  Magic number: " << hexStr(pDosHeader->e_magic) << '\n';
+	cout << "  Magic number as string: " << eMagicString << '\n';
+	cout << "  Offset to PE header: " << hexStr(pDosHeader->e_lfanew) << '\n';
+	cout << "PE header\n";
+	cout << "  Signature\n";
+	cout << "    Sig: " << hexStr(*(DWORD*)(pFileContents + pDosHeader->e_lfanew)) << '\n';
+	cout << "    Sig string: " << (CHAR*)(pFileContents + pDosHeader->e_lfanew) << '\n';
+	cout << "  File header\n";
+	cout << "    Machine: " << hexStr(pPeHeaders->FileHeader.Machine) << '\n';
+	cout << "    Number of sections: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSections << '\n';
+	cout << "    Pointer to symbol table: " << hexStr(pPeHeaders->FileHeader.PointerToSymbolTable) << '\n';
+	cout << "    Number of symbols: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSymbols << '\n';
+	cout << "    Size of optional header: " << hexStr(pPeHeaders->FileHeader.SizeOfOptionalHeader) << '\n';
 	//todo check if its dll with characteristics and exit
-	cout << "File header | characteristics: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.Characteristics << '\n';
-	cout << "Optional header magic number (typecasted): " << hex << "0x" << uppercase << pPeHeaders->OptionalHeader.Magic << '\n';
-	cout << "Entry point: " << hex << "0x" << uppercase << pPeHeaders->OptionalHeader.AddressOfEntryPoint << '\n';
+	cout << "    Characteristics: " << hexStr(pPeHeaders->FileHeader.Characteristics) << '\n';
+	cout << "  Optional header\n";
+	cout << "    Magic number: " << hexStr(pPeHeaders->OptionalHeader.Magic) << '\n';
+	cout << "    Entry point: " << hexStr(pPeHeaders->OptionalHeader.AddressOfEntryPoint) << '\n';
 
 	//cout << "Press any key to exit.\n";
 	//while (!_kbhit());
