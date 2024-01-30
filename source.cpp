@@ -9,7 +9,6 @@ using std::hex, std::dec, std::uppercase, std::cout, std::cerr;
 using std::string;
 
 std::vector<char> readFile(const string& filename);
-string wordToString(const WORD& word);
 
 int main(int argc, char* argv[])
 {
@@ -40,55 +39,38 @@ int main(int argc, char* argv[])
 
 	const char* pFileContents{ fileContents.data() };
 
-	const IMAGE_DOS_HEADER dosHeader{ *(IMAGE_DOS_HEADER*)pFileContents };
-	const string dosHeaderMagic{ wordToString(dosHeader.e_magic) };
-	if (dosHeaderMagic != string{ "MZ" }) //IMAGE_DOS_SIGNATURE
+	const IMAGE_DOS_HEADER* pDosHeader{ (IMAGE_DOS_HEADER*)pFileContents };
+	if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
 	{
-		cerr << "DOS header begins with an invalid WORD: " << dosHeader.e_magic << " string variant: " << dosHeaderMagic << '\n';
+		cerr << "DOS header begins with an invalid WORD: " << hex << "0x" << uppercase << pDosHeader->e_magic << " should be: 0x" << IMAGE_DOS_SIGNATURE << '\n';
 		return EXIT_FAILURE;
 	}
 
-	const LONG dosHeaderOffsetToPeHeader{ dosHeader.e_lfanew };
-	const LONG* pPeHeaderStart{ ((LONG*)(pFileContents + dosHeaderOffsetToPeHeader)) };
-	const LONG peHeaderStart{ *pPeHeaderStart };
-	if (peHeaderStart != IMAGE_NT_SIGNATURE)
+	const IMAGE_NT_HEADERS* pPeHeaders{ (IMAGE_NT_HEADERS*)(pFileContents + pDosHeader->e_lfanew) };
+
+	if (pPeHeaders->Signature != IMAGE_NT_SIGNATURE)
 	{
-		cerr << "PE header begins with an invalid LONG sig: 0x" << std::hex << peHeaderStart << " should be: 0x" << IMAGE_NT_SIGNATURE << '\n';
+		cerr << "PE header begins with an invalid LONG sig: " << hex << "0x" << uppercase << pPeHeaders->Signature << " should be: 0x" << IMAGE_NT_SIGNATURE << '\n';
 		return EXIT_FAILURE;
 	}
 
-	//or file header?
-	const IMAGE_FILE_HEADER* pPeHeader{ (IMAGE_FILE_HEADER*)(pFileContents + dosHeaderOffsetToPeHeader + sizeof peHeaderStart) };
-
-	cout << "dosHeader.e_magic as string: " << dosHeaderMagic << '\n';
-	cout << "Offset to PE header: " << hex << "0x" << uppercase << dosHeaderOffsetToPeHeader << '\n';
-	cout << "PE header start: " << hex << "0x" << uppercase << peHeaderStart << '\n';
-	cout << "File header | machine: " << hex << "0x" << uppercase << pPeHeader->Machine << '\n';
-	cout << "File header | number of sections: " << dec << uppercase << pPeHeader->NumberOfSections << '\n';
-	cout << "File header | pointer to symbol table: " << hex << "0x" << uppercase << pPeHeader->PointerToSymbolTable << '\n';
-	cout << "File header | number of symbols: " << dec << uppercase << pPeHeader->NumberOfSymbols << '\n';
-	cout << "File header | size of optional header: " << hex << "0x" << uppercase << pPeHeader->SizeOfOptionalHeader << '\n';
-	cout << "File header | characteristics: " << hex << "0x" << uppercase << pPeHeader->Characteristics << '\n';
-	cout << "Optional header value (2 bytes, magic number): " << hex << "0x" << uppercase << *(WORD*)(pPeHeader + sizeof BYTE) << '\n'; // immediately after the pe header
-
-	const IMAGE_OPTIONAL_HEADER* pOptionalHeader{ (IMAGE_OPTIONAL_HEADER*)(pPeHeader + sizeof BYTE) };
-	cout << "Optional header magic number (typecasted): " << hex << "0x" << uppercase << pOptionalHeader->Magic << '\n';
+	cout << "dosHeader.e_magic: " << hex << "0x" << uppercase << pDosHeader->e_magic << '\n';
+	cout << "Offset to PE header: " << hex << "0x" << uppercase << pDosHeader->e_lfanew << '\n';
+	cout << "PE header start: " << hex << "0x" << uppercase << pFileContents + pDosHeader->e_lfanew << '\n';
+	cout << "File header | machine: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.Machine << '\n';
+	cout << "File header | number of sections: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSections << '\n';
+	cout << "File header | pointer to symbol table: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.PointerToSymbolTable << '\n';
+	cout << "File header | number of symbols: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSymbols << '\n';
+	cout << "File header | size of optional header: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.SizeOfOptionalHeader << '\n';
+	//todo check if its dll with characteristics and exit
+	cout << "File header | characteristics: " << hex << "0x" << uppercase << pPeHeaders->FileHeader.Characteristics << '\n';
+	cout << "Optional header magic number (typecasted): " << hex << "0x" << uppercase << pPeHeaders->OptionalHeader.Magic << '\n';
+	cout << "Entry point: " << hex << "0x" << uppercase << pPeHeaders->OptionalHeader.AddressOfEntryPoint << '\n';
 
 	//cout << "Press any key to exit.\n";
 	//while (!_kbhit());
 
 	return EXIT_SUCCESS;
-}
-
-//TODO can endianness screw me over here?
-// this function is just for fun, to explore a way to convert a word to a readable ascii string
-string wordToString(const WORD& word)
-{
-	char buf[3];
-	buf[0] = word & 0xFF;
-	buf[1] = (word >> 8) & 0xFF;
-	buf[2] = '\0';
-	return string{ buf };
 }
 
 std::vector<char> readFile(const string& filename)
