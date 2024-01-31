@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	auto hexStr = [](auto value)
+	auto hexStr = [](const auto& value)
 		{
 			std::stringstream ss;
 			ss << std::hex << "0x" << std::uppercase << value;
