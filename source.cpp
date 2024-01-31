@@ -79,11 +79,18 @@ int main(int argc, char* argv[])
 	cout << "    Pointer to symbol table: " << hexStr(pPeHeaders->FileHeader.PointerToSymbolTable) << '\n';
 	cout << "    Number of symbols: " << dec << uppercase << pPeHeaders->FileHeader.NumberOfSymbols << '\n';
 	cout << "    Size of optional header: " << hexStr(pPeHeaders->FileHeader.SizeOfOptionalHeader) << '\n';
-	//todo check if its dll with characteristics and exit
 	cout << "    Characteristics: " << hexStr(pPeHeaders->FileHeader.Characteristics) << '\n';
 	cout << "  Optional header\n";
 	cout << "    Magic number: " << hexStr(pPeHeaders->OptionalHeader.Magic) << '\n';
+	cout << "    Section Alignment: " << hexStr(pPeHeaders->OptionalHeader.SectionAlignment) << '\n';
+	cout << "    File Alignment: " << hexStr(pPeHeaders->OptionalHeader.FileAlignment) << '\n';
 	cout << "    Entry point: " << hexStr(pPeHeaders->OptionalHeader.AddressOfEntryPoint) << '\n';
+	cout << "    Data directories: " << '\n';
+	for (size_t i{ 0 }; i < std::size(pPeHeaders->OptionalHeader.DataDirectory); i++)
+	{
+		cout << "	DataDirectory[" << i << "] Size: " << hexStr(pPeHeaders->OptionalHeader.DataDirectory[i].Size) << '\n';
+		cout << "	DataDirectory[" << i << "] VirtualAddress: " << hexStr(pPeHeaders->OptionalHeader.DataDirectory[i].VirtualAddress) << '\n';
+	}
 
 	//cout << "Press any key to exit.\n";
 	//while (!_kbhit());
