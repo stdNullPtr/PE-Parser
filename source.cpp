@@ -48,26 +48,23 @@ int main(int argc, char* argv[])
 
 	const char* pFileContents{ fileContents.data() };
 
-	const IMAGE_DOS_HEADER* pDosHeader{ (IMAGE_DOS_HEADER*)pFileContents };
+	const auto pDosHeader{ (IMAGE_DOS_HEADER*)pFileContents };
 	if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
 	{
 		cerr << "DOS header begins with an invalid WORD: " << hexStr(pDosHeader->e_magic) << " should be: " << hexStr(IMAGE_DOS_SIGNATURE) << '\n';
 		return EXIT_FAILURE;
 	}
 
-	const IMAGE_NT_HEADERS* pPeHeaders{ (IMAGE_NT_HEADERS*)(pFileContents + pDosHeader->e_lfanew) };
+	const auto pPeHeaders{ (IMAGE_NT_HEADERS*)(pFileContents + pDosHeader->e_lfanew) };
 	if (pPeHeaders->Signature != IMAGE_NT_SIGNATURE)
 	{
 		cerr << "PE header begins with an invalid LONG sig: " << hexStr(pPeHeaders->Signature) << " should be: " << hexStr(IMAGE_NT_SIGNATURE) << '\n';
 		return EXIT_FAILURE;
 	}
 
-	char eMagicString[3]{ 0 };
-	std::memcpy(eMagicString, &pDosHeader->e_magic, 2);
-
 	cout << "DOS Header\n";
 	cout << "  Magic number: " << hexStr(pDosHeader->e_magic) << '\n';
-	cout << "  Magic number as string: " << eMagicString << '\n';
+	cout << "  Magic number as string: " << string((CHAR*)&pDosHeader->e_magic, 2) << '\n';
 	cout << "  Offset to PE header: " << hexStr(pDosHeader->e_lfanew) << '\n';
 	cout << "PE header\n";
 	cout << "  Signature\n";
@@ -90,6 +87,25 @@ int main(int argc, char* argv[])
 	{
 		cout << "	DataDirectory[" << i << "] Size: " << hexStr(pPeHeaders->OptionalHeader.DataDirectory[i].Size) << '\n';
 		cout << "	DataDirectory[" << i << "] VirtualAddress: " << hexStr(pPeHeaders->OptionalHeader.DataDirectory[i].VirtualAddress) << '\n';
+	}
+
+	const auto sectionHeaders{ (IMAGE_SECTION_HEADER*)(pPeHeaders + sizeof BYTE) };
+
+	cout << "Section table\n";
+	for (size_t i{ 0 }; i < pPeHeaders->FileHeader.NumberOfSections; i++)
+	{
+		const auto sectionHeader{ sectionHeaders[i] };
+		cout << "  Section header #" << i << " \n";
+		cout << "    Name " << string((CHAR*)sectionHeader.Name, std::size(sectionHeader.Name)) << " \n";
+		cout << "    PhysicalAddress | VirtualSize " << hexStr(sectionHeader.Misc.PhysicalAddress) << " \n";
+		cout << "    VirtualAddress " << hexStr(sectionHeader.VirtualAddress) << " \n";
+		cout << "    SizeOfRawData " << hexStr(sectionHeader.SizeOfRawData) << " \n";
+		cout << "    PointerToRawData " << hexStr(sectionHeader.PointerToRawData) << " \n";
+		cout << "    PointerToRelocations " << hexStr(sectionHeader.PointerToRelocations) << " \n";
+		//cout << "    PointerToLinenumbers " << hexStr(sectionHeader.PointerToLinenumbers) << " \n";
+		cout << "    NumberOfRelocations " << sectionHeader.NumberOfRelocations << " \n";
+		//cout << "    NumberOfLinenumbers " << sectionHeader.NumberOfLinenumbers << " \n";
+		cout << "    Characteristics " << hexStr(sectionHeader.Characteristics) << " \n";
 	}
 
 	//cout << "Press any key to exit.\n";
