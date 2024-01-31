@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 
 	cout << "DOS Header\n";
 	cout << "  Magic number: " << hexStr(pDosHeader->e_magic) << '\n';
-	cout << "  Magic number as string: " << string((CHAR*)&pDosHeader->e_magic, 2) << '\n';
+	cout << "  Magic number as string: " << string((CHAR*)&pDosHeader->e_magic, sizeof pDosHeader->e_magic) << '\n';
 	cout << "  Offset to PE header: " << hexStr(pDosHeader->e_lfanew) << '\n';
 	cout << "PE header\n";
 	cout << "  Signature\n";
