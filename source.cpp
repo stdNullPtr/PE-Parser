@@ -88,15 +88,15 @@ int main(int argc, char* argv[])
 		cout << "	DataDirectory[" << i << "] VirtualAddress: " << hexStr(pPeHeaders->OptionalHeader.DataDirectory[i].VirtualAddress) << '\n';
 	}
 
-	const auto sectionHeaders{ (IMAGE_SECTION_HEADER*)(pPeHeaders + sizeof BYTE) };
+	const auto pSectionHeaders{ (IMAGE_SECTION_HEADER*)(pPeHeaders + sizeof BYTE) };
 
 	// Cool macro from Microsoft
-	//const auto sectionHeadersWithMacro{ IMAGE_FIRST_SECTION(pPeHeaders)};
+	//const auto pSectionHeadersWithMacro{ IMAGE_FIRST_SECTION(pPeHeaders)};
 
 	cout << "Section table\n";
 	for (size_t i{ 0 }; i < pPeHeaders->FileHeader.NumberOfSections; i++)
 	{
-		const auto sectionHeader{ sectionHeaders[i] };
+		const auto sectionHeader{ pSectionHeaders[i] };
 		cout << "  Section header #" << i << " \n";
 		cout << "    Name " << string((CHAR*)sectionHeader.Name, std::size(sectionHeader.Name)) << " \n";
 		cout << "    PhysicalAddress | VirtualSize " << hexStr(sectionHeader.Misc.PhysicalAddress) << " \n";
