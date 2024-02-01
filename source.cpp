@@ -29,7 +29,6 @@ int main(int argc, char* argv[])
 	}
 
 	const string filePath{ argv[1] };
-
 	cout << "File path: " << filePath << '\n';
 
 	const auto fileContents{ readFile(filePath) };
@@ -90,6 +89,9 @@ int main(int argc, char* argv[])
 	}
 
 	const auto sectionHeaders{ (IMAGE_SECTION_HEADER*)(pPeHeaders + sizeof BYTE) };
+
+	// Cool macro from Microsoft
+	//const auto sectionHeadersWithMacro{ IMAGE_FIRST_SECTION(pPeHeaders)};
 
 	cout << "Section table\n";
 	for (size_t i{ 0 }; i < pPeHeaders->FileHeader.NumberOfSections; i++)
