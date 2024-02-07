@@ -61,6 +61,12 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	if (pPeHeaders->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
+	{
+		cerr << "OptionalHeader header begins with an invalid magic: " << hexStr(pPeHeaders->OptionalHeader.Magic) << " should be: " << hexStr(IMAGE_NT_OPTIONAL_HDR_MAGIC) << '\n';
+		return EXIT_FAILURE;
+	}
+
 	cout << "DOS Header\n";
 	cout << "  Magic number: " << hexStr(pDosHeader->e_magic) << '\n';
 	cout << "  Magic number as string: " << string((CHAR*)&pDosHeader->e_magic, sizeof pDosHeader->e_magic) << '\n';
